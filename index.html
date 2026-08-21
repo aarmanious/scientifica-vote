@@ -36,8 +36,12 @@
   .pay{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:13px 14px;margin-bottom:8px}
   .pay .h{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--soft)}
   .pay .n{font-size:16.5px;font-weight:700;margin:3px 0}
-  .pay .v{font-size:15px;line-height:1.45}
-  .pay.win .v{color:var(--turq)} .pay.zero .v{color:var(--coral)}
+  .pay .big{font-size:24px;font-weight:800;letter-spacing:.02em;margin:2px 0}
+  .pay.win .big{color:var(--turq)} .pay.zero .big{color:var(--coral)}
+  .pay .v{font-size:14.5px;line-height:1.45;color:var(--soft)}
+  .pay .room{font-size:12.5px;letter-spacing:.03em;margin-top:6px;padding-top:6px;
+             border-top:1px solid rgba(143,201,201,.25);color:var(--soft)}
+  .pay .room.sting{color:var(--gold);font-weight:600}
   .foot{margin-top:auto;padding-top:18px;font-size:11px;color:rgba(236,251,248,.4);
         letter-spacing:.1em;text-transform:uppercase}
 </style>
@@ -75,18 +79,18 @@ const SURVEY=[
  {id:"b0", t:"0 – 20 %"},{id:"b20", t:"20 – 40 %"},{id:"b40", t:"40 – 60 %"},
  {id:"b60", t:"60 – 80 %"},{id:"b80", t:"80 – 100 %"}];
 const OUTCOME={
- vulcan:{v:"Phantom planet — CHF 0. But its mystery became Einstein's relativity.",win:false},
- laser: {v:"The laser. Devices ~$25 bn/yr — laser-enabled industries > $1 trillion.",win:true},
- jelly: {v:"The glowing protein lighting up modern biology (~$3 bn/yr in tools).",win:true},
- spring:{v:"The enzyme behind every DNA test on Earth (~$15–30 bn/yr).",win:true},
- poly:  {v:"Contamination. CHF 0 — an honest dead end.",win:false},
- clocks:{v:"GPS. ~$1.4 trillion of economic benefit.",win:true},
- stm:   {v:"Nanoscience — the measuring stick under a $600 bn/yr chip industry.",win:true},
- crispr:{v:"CRISPR gene editing — first cures approved (~$5–6 bn/yr and growing).",win:true},
- mrna:  {v:"The mRNA vaccines — >$100 bn cumulative.",win:true},
- arsenic:{v:"Contamination + hype. CHF 0; retracted after 15 years.",win:false},
- brain: {v:"€1 bn spent; the promised simulated brain never arrived.",win:false},
- leaf:  {v:"Still no product after 50 years — the honest moonshot continues.",win:false}};
+ vulcan:{val:"CHF 0",           v:"Phantom planet — but its mystery became Einstein's relativity.",win:false},
+ laser: {val:"> $1 trillion",   v:"The laser. Devices ~$25 bn/yr — laser-enabled industries beyond that.",win:true},
+ jelly: {val:"~$3 bn / yr",     v:"The glowing protein lighting up modern biology.",win:true},
+ spring:{val:"$15–30 bn / yr",  v:"The enzyme behind every DNA test on Earth.",win:true},
+ poly:  {val:"CHF 0",           v:"Contamination — an honest dead end.",win:false},
+ clocks:{val:"~$1.4 trillion",  v:"GPS. Relativity, in your pocket.",win:true},
+ stm:   {val:"$600 bn / yr",    v:"Nanoscience — the measuring stick under the chip industry.",win:true},
+ crispr:{val:"$5–6 bn / yr",    v:"CRISPR gene editing — first cures approved, and growing.",win:true},
+ mrna:  {val:"> $100 bn",       v:"The mRNA vaccines.",win:true},
+ arsenic:{val:"CHF 0",          v:"Contamination + hype; retracted after 15 years.",win:false},
+ brain: {val:"− €1 bn",         v:"A billion spent; the promised simulated brain never arrived.",win:false},
+ leaf:  {val:"$0 — so far",     v:"Fifty years of honest work; the moonshot continues.",win:false}};
 
 const PHASES={
  waiting:{label:"waiting for the game to start"},
@@ -178,13 +182,22 @@ function renderPayout(state){
   const wrap=document.getElementById('wrap');
   const picks=(myPick('r1inv')||[]).concat(myPick('r2inv')||[]);
   if(!picks.length){ wrap.innerHTML='<div class="note">No investor picks stored on this phone — watch the big screen for the reveal.</div>'; return; }
-  let html='<div class="note">As an investor, you funded these. Here is what they became:</div>';
+  const built=(state.funded_r1||[]).concat(state.funded_r2||[]);
+  let html='<div class="note">Your investor picks — what history did with them, and what this room did:</div>';
   let wins=0;
   picks.forEach(id=>{
     const c=[...R1,...R2].find(x=>x.id===id); const o=OUTCOME[id]; if(!c||!o) return;
     if(o.win) wins++;
-    html+=`<div class="pay ${o.win?'win':'zero'}"><div class="h">your pick</div>
-           <div class="n">${c.t}</div><div class="v">${o.v}</div></div>`;
+    const rf=built.includes(id);
+    const flag=o.win
+      ? (rf?'✓ this room funded it too':'✗ paid off in reality — but this room rejected it')
+      : (rf?'this room funded it — history returned zero':'this room passed on it — history agreed');
+    html+=`<div class="pay ${o.win?'win':'zero'}">
+      <div class="h">your pick · ${c.y}</div>
+      <div class="n">${c.t}</div>
+      <div class="big">${o.val}</div>
+      <div class="v">${o.v}</div>
+      <div class="room ${o.win&&!rf?'sting':''}">${flag}</div></div>`;
   });
   html+=`<div class="done">${wins===picks.length?'A golden portfolio — every pick paid off.':
         wins===0?'Every pick returned zero — welcome to research funding.':
