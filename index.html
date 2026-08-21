@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Is Curiosity Worth the Cost? — Vote</title>
+<style>
+  :root{--bg1:#07374a;--bg2:#032330;--card:#0c4a5e;--edge:#2a7286;--ink:#ecfbf8;
+        --soft:#8fc9c9;--coral:#ff7f5c;--turq:#38d3bc;--gold:#ffd166}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{min-height:100vh;background:linear-gradient(180deg,var(--bg1),var(--bg2));
+       color:var(--ink);font-family:'Avenir Next','Segoe UI',Helvetica,Arial,sans-serif;
+       display:flex;flex-direction:column;align-items:center;padding:18px 14px 40px}
+  .top{width:100%;max-width:560px;text-align:center;margin-bottom:14px}
+  .top h1{font-size:19px;letter-spacing:.06em}
+  .top .ph{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--turq);margin-top:4px}
+  .wrap{width:100%;max-width:560px;display:flex;flex-direction:column;gap:10px}
+  .note{color:var(--soft);text-align:center;font-size:15px;line-height:1.55;padding:10px}
+  .role{border:2px solid var(--turq);border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.5;
+        background:rgba(56,211,188,.07)}
+  .role.investor{border-color:var(--gold);background:rgba(255,209,102,.07)}
+  .role b.inv{color:var(--gold)} .role b.nsf{color:var(--turq)}
+  .opt{display:flex;align-items:center;gap:12px;background:var(--card);border:2px solid var(--edge);
+       border-radius:12px;padding:13px 14px;cursor:pointer;user-select:none;transition:all .12s}
+  .opt .t{flex:1;font-size:16.5px;font-weight:600}
+  .opt .y{font-size:12px;color:var(--soft);letter-spacing:.15em}
+  .opt.sel{border-color:var(--gold);background:rgba(255,209,102,.10)}
+  .opt.sel .t{color:var(--gold)}
+  .opt.dis{opacity:.45}
+  button.go{margin-top:8px;padding:15px;border-radius:12px;font-size:16px;font-weight:700;
+     letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;
+     background:var(--coral);color:#28120a}
+  button.go:disabled{opacity:.35}
+  .done{ text-align:center;padding:26px 10px;font-size:18px;line-height:1.6}
+  .done b{color:var(--turq)}
+  .pay{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:13px 14px;margin-bottom:8px}
+  .pay .h{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--soft)}
+  .pay .n{font-size:16.5px;font-weight:700;margin:3px 0}
+  .pay .v{font-size:15px;line-height:1.45}
+  .pay.win .v{color:var(--turq)} .pay.zero .v{color:var(--coral)}
+  .foot{margin-top:auto;padding-top:18px;font-size:11px;color:rgba(236,251,248,.4);
+        letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>Is Curiosity Worth the Cost?</h1>
+    <div class="ph" id="phaseLabel">connecting…</div>
+  </div>
+  <div class="wrap" id="wrap"><div class="note">Connecting to the room…</div></div>
+  <div class="foot">Scientifica 2026 · anonymous vote</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+/* ====== CONFIG — paste from Supabase project settings ====== */
+const SUPABASE_URL = "https://gwpawtexcwhtavdxakvm.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_ONj8MatQbh6voeMCTXM1fQ_L16PJSSm";
+/* =========================================================== */
+
+const R1=[
+ {id:"vulcan", t:"The planet that must exist", y:"1860"},
+ {id:"laser",  t:"An echo of light", y:"1959"},
+ {id:"jelly",  t:"Why does the jellyfish glow?", y:"1961"},
+ {id:"spring", t:"Life in boiling water", y:"1966"},
+ {id:"poly",   t:"A second kind of water", y:"1966"},
+ {id:"clocks", t:"Do flying clocks lie?", y:"1971"}];
+const R2=[
+ {id:"stm",    t:"Feeling atoms with a needle", y:"1979"},
+ {id:"crispr", t:"A drumbeat in the DNA", y:"1995"},
+ {id:"mrna",   t:"Cells that brew their own medicine", y:"1995"},
+ {id:"arsenic",t:"Life that runs on poison", y:"2009"},
+ {id:"brain",  t:"The brain in a computer", y:"2013"},
+ {id:"leaf",   t:"The artificial leaf", y:"2015"}];
+const SURVEY=[
+ {id:"b0", t:"0 – 20 %"},{id:"b20", t:"20 – 40 %"},{id:"b40", t:"40 – 60 %"},
+ {id:"b60", t:"60 – 80 %"},{id:"b80", t:"80 – 100 %"}];
+const OUTCOME={
+ vulcan:{v:"Phantom planet — CHF 0. But its mystery became Einstein's relativity.",win:false},
+ laser: {v:"The laser. Devices ~$25 bn/yr — laser-enabled industries > $1 trillion.",win:true},
+ jelly: {v:"The glowing protein lighting up modern biology (~$3 bn/yr in tools).",win:true},
+ spring:{v:"The enzyme behind every DNA test on Earth (~$15–30 bn/yr).",win:true},
+ poly:  {v:"Contamination. CHF 0 — an honest dead end.",win:false},
+ clocks:{v:"GPS. ~$1.4 trillion of economic benefit.",win:true},
+ stm:   {v:"Nanoscience — the measuring stick under a $600 bn/yr chip industry.",win:true},
+ crispr:{v:"CRISPR gene editing — first cures approved (~$5–6 bn/yr and growing).",win:true},
+ mrna:  {v:"The mRNA vaccines — >$100 bn cumulative.",win:true},
+ arsenic:{v:"Contamination + hype. CHF 0; retracted after 15 years.",win:false},
+ brain: {v:"€1 bn spent; the promised simulated brain never arrived.",win:false},
+ leaf:  {v:"Still no product after 50 years — the honest moonshot continues.",win:false}};
+
+const PHASES={
+ waiting:{label:"waiting for the game to start"},
+ r1inv:{label:"Round 1 · vote as INVESTOR", items:R1, k:2, role:"investor",
+        text:"You are an <b class='inv'>investor</b>. One goal: <b class='inv'>maximum profit</b>. Fund <b>2</b> projects."},
+ r1nsf:{label:"Round 1 · vote as SCIENCE FOUNDATION", items:R1, k:2, role:"nsf",
+        text:"You are the <b class='nsf'>national science foundation</b>: sound knowledge for society, short and long run. Fund <b>2</b>."},
+ r2inv:{label:"Round 2 · vote as INVESTOR", items:R2, k:2, role:"investor",
+        text:"Investor again — <b class='inv'>profit</b>. Fund <b>2</b>."},
+ r2nsf:{label:"Round 2 · vote as SCIENCE FOUNDATION", items:R2, k:2, role:"nsf",
+        text:"The <b class='nsf'>foundation</b> again — the public mission. Fund <b>2</b>."},
+ survey:{label:"Final question", items:SURVEY, k:1, role:"nsf",
+        text:"How much of public research funding should go to <b class='nsf'>curiosity-driven</b> research?"},
+ payout:{label:"Your portfolio"},
+ done:{label:"thank you!"}};
+
+let sb=null, voterId=null, current=null;
+function boot(){
+  try{ voterId=localStorage.getItem('voterId');
+       if(!voterId){ voterId=crypto.randomUUID(); localStorage.setItem('voterId',voterId);} }
+  catch(e){ voterId=crypto.randomUUID(); }
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  sb.channel('state').on('postgres_changes',
+    {event:'*',schema:'public',table:'app_state'},
+    p=>render(p.new)).subscribe();
+  sb.from('app_state').select('*').eq('id',1).single()
+    .then(({data,error})=>{ if(data) render(data);
+      else document.getElementById('wrap').innerHTML=
+        '<div class="note">Could not reach the room — check the config keys.</div>'; });
+  setInterval(async()=>{ const {data}=await sb.from('app_state').select('*').eq('id',1).single();
+                         if(data && (!current||data.phase!==current.phase)) render(data); },5000);
+}
+function myPick(key){ try{return JSON.parse(localStorage.getItem('pick_'+key)||'null')}catch(e){return null} }
+function savePick(key,v){ try{localStorage.setItem('pick_'+key,JSON.stringify(v))}catch(e){} }
+
+function render(state){
+  current=state;
+  const cfg=PHASES[state.phase]||PHASES.waiting;
+  document.getElementById('phaseLabel').textContent=cfg.label;
+  const wrap=document.getElementById('wrap');
+  if(state.phase==='waiting'){ wrap.innerHTML='<div class="note">Welcome! Keep this page open — voting starts soon.</div>'; return; }
+  if(state.phase==='done'){ wrap.innerHTML='<div class="note">Thank you for playing the committee. Enjoy the rest of the talk!</div>'; return; }
+  if(state.phase==='payout'){ renderPayout(state); return; }
+  if(!cfg.items) return;
+
+  const already=myPick(state.phase);
+  if(already){ wrap.innerHTML=`<div class="done">Vote received ✓<br><b>${already.map(id=>[...R1,...R2,...SURVEY].find(c=>c.id===id).t).join('</b> · <b>')}</b><br><span style="color:var(--soft);font-size:14px">Watch the big screen.</span></div>`; return; }
+
+  let sel=[];
+  wrap.innerHTML='';
+  const role=document.createElement('div');
+  role.className='role'+(cfg.role==='investor'?' investor':'');
+  role.innerHTML=cfg.text; wrap.appendChild(role);
+  cfg.items.forEach(c=>{
+    const d=document.createElement('div'); d.className='opt';
+    d.innerHTML=`<span class="t">${c.t}</span>${c.y?`<span class="y">${c.y}</span>`:''}`;
+    d.onclick=()=>{
+      if(sel.includes(c.id)) sel=sel.filter(x=>x!==c.id);
+      else if(sel.length<cfg.k) sel.push(c.id);
+      [...wrap.querySelectorAll('.opt')].forEach((el,i)=>{
+        const id=cfg.items[i].id;
+        el.classList.toggle('sel',sel.includes(id));
+        el.classList.toggle('dis',!sel.includes(id)&&sel.length>=cfg.k);
+      });
+      btn.disabled=(sel.length!==cfg.k);
+      btn.textContent=(sel.length===cfg.k)?'Cast my vote':`Pick ${cfg.k-sel.length} more`;
+    };
+    wrap.appendChild(d);
+  });
+  const btn=document.createElement('button');
+  btn.className='go'; btn.disabled=true; btn.textContent=`Pick ${cfg.k}`;
+  btn.onclick=async()=>{
+    btn.disabled=true; btn.textContent='Sending…';
+    const {error}=await sb.from('votes').upsert(
+      {voter_id:voterId, phase:current.phase, choices:sel});
+    if(error){ btn.textContent='Failed — tap to retry'; btn.disabled=false; return; }
+    savePick(current.phase,sel); render(current);
+  };
+  wrap.appendChild(btn);
+}
+
+function renderPayout(state){
+  const wrap=document.getElementById('wrap');
+  const picks=(myPick('r1inv')||[]).concat(myPick('r2inv')||[]);
+  if(!picks.length){ wrap.innerHTML='<div class="note">No investor picks stored on this phone — watch the big screen for the reveal.</div>'; return; }
+  let html='<div class="note">As an investor, you funded these. Here is what they became:</div>';
+  let wins=0;
+  picks.forEach(id=>{
+    const c=[...R1,...R2].find(x=>x.id===id); const o=OUTCOME[id]; if(!c||!o) return;
+    if(o.win) wins++;
+    html+=`<div class="pay ${o.win?'win':'zero'}"><div class="h">your pick</div>
+           <div class="n">${c.t}</div><div class="v">${o.v}</div></div>`;
+  });
+  html+=`<div class="done">${wins===picks.length?'A golden portfolio — every pick paid off.':
+        wins===0?'Every pick returned zero — welcome to research funding.':
+        `<b>${wins}</b> of ${picks.length} picks paid off — nobody can pick only winners.`}</div>`;
+  wrap.innerHTML=html;
+}
+boot();
+</script>
+</body>
+</html>
