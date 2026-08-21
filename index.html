@@ -121,10 +121,13 @@ function boot(){
       else document.getElementById('wrap').innerHTML=
         '<div class="note">Could not reach the room — check the config keys.</div>'; });
   setInterval(async()=>{ const {data}=await sb.from('app_state').select('*').eq('id',1).single();
-                         if(data && (!current||data.phase!==current.phase)) render(data); },5000);
+                         if(data && (!current||data.phase!==current.phase||data.game!==current.game)) render(data); },5000);
 }
-function myPick(key){ try{return JSON.parse(localStorage.getItem('pick_'+key)||'null')}catch(e){return null} }
-function savePick(key,v){ try{localStorage.setItem('pick_'+key,JSON.stringify(v))}catch(e){} }
+/* picks are namespaced by the game counter: presenter_reset bumps app_state.game,
+   so every phone automatically forgets its old ballot and can vote again */
+function pickKey(state,phase){ return 'pick_g'+(state&&state.game||1)+'_'+phase; }
+function myPick(state,phase){ try{return JSON.parse(localStorage.getItem(pickKey(state,phase))||'null')}catch(e){return null} }
+function savePick(state,phase,v){ try{localStorage.setItem(pickKey(state,phase),JSON.stringify(v))}catch(e){} }
 
 function render(state){
   current=state;
@@ -136,7 +139,7 @@ function render(state){
   if(state.phase==='payout'){ renderPayout(state); return; }
   if(!cfg.items) return;
 
-  const already=myPick(state.phase);
+  const already=myPick(state,state.phase);
   if(already){ wrap.innerHTML=`<div class="done">Vote received ✓<br><b>${already.map(id=>[...R1,...R2,...SURVEY].find(c=>c.id===id).t).join('</b> · <b>')}</b><br><span style="color:var(--soft);font-size:14px">Watch the big screen.</span></div>`; return; }
 
   let sel=[];
@@ -173,14 +176,14 @@ function render(state){
         .eq('voter_id',voterId).eq('phase',current.phase));
     }
     if(error){ btn.textContent='Failed — tap to retry'; btn.disabled=false; return; }
-    savePick(current.phase,sel); render(current);
+    savePick(current,current.phase,sel); render(current);
   };
   wrap.appendChild(btn);
 }
 
 function renderPayout(state){
   const wrap=document.getElementById('wrap');
-  const picks=(myPick('r1inv')||[]).concat(myPick('r2inv')||[]);
+  const picks=(myPick(state,'r1inv')||[]).concat(myPick(state,'r2inv')||[]);
   if(!picks.length){ wrap.innerHTML='<div class="note">No investor picks stored on this phone — watch the big screen for the reveal.</div>'; return; }
   const built=(state.funded_r1||[]).concat(state.funded_r2||[]);
   let html='<div class="note">Your investor picks — what history did with them, and what this room did:</div>';
