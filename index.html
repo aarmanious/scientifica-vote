@@ -160,8 +160,14 @@ function render(state){
   btn.className='go'; btn.disabled=true; btn.textContent=`Pick ${cfg.k}`;
   btn.onclick=async()=>{
     btn.disabled=true; btn.textContent='Sending…';
-    const {error}=await sb.from('votes').upsert(
+    /* insert first; on duplicate (re-vote) fall back to update.
+       No upsert: ON CONFLICT needs a SELECT policy, and phones may not read ballots. */
+    let {error}=await sb.from('votes').insert(
       {voter_id:voterId, phase:current.phase, choices:sel});
+    if(error && error.code==='23505'){
+      ({error}=await sb.from('votes').update({choices:sel})
+        .eq('voter_id',voterId).eq('phase',current.phase));
+    }
     if(error){ btn.textContent='Failed — tap to retry'; btn.disabled=false; return; }
     savePick(current.phase,sel); render(current);
   };
